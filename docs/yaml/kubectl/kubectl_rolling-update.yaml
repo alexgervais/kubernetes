@@ -30,6 +30,10 @@ options:
   default_value: "true"
   usage: |
     If true, include definitions of new APIs via calls to the API server. [default true]
+- name: no-distinct-image
+  default_value: "false"
+  usage: |
+    If true, allow the same existing image to be rolled out again. Useful for rolling out images with "latest" tag. This will make rollback impossible.
 - name: no-headers
   default_value: "false"
   usage: When using the default output, don't print headers.

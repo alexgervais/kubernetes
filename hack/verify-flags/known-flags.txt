@@ -267,6 +267,7 @@ minion-path-override
 namespace-sync-period
 network-plugin
 network-plugin-dir
+no-distinct-image
 no-headers
 no-suggestions
 node-instance-group

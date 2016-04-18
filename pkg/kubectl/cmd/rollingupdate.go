@@ -95,6 +95,7 @@ func NewCmdRollingUpdate(f *cmdutil.Factory, out io.Writer) *cobra.Command {
 	cmd.MarkFlagRequired("filename")
 	cmd.Flags().String("image", "", "Image to use for upgrading the replication controller. Must be distinct from the existing image (either new image or new image tag).  Can not be used with --filename/-f")
 	cmd.MarkFlagRequired("image")
+	cmd.Flags().Bool("no-distinct-image", false, `If true, allow the same existing image to be rolled out again. Useful for rolling out images with "latest" tag. This will make rollback impossible.`)
 	cmd.Flags().String("deployment-label-key", "deployment", "The key to use to differentiate between two different controllers, default 'deployment'.  Only relevant when --image is specified, ignored otherwise")
 	cmd.Flags().String("container", "", "Container name which will have its image upgraded. Only relevant when --image is specified, ignored otherwise. Required when using --image on a multi-container pod")
 	cmd.Flags().Bool("dry-run", false, "If true, print out the changes that would be made, but don't actually make them.")
@@ -150,6 +151,7 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 	deploymentKey := cmdutil.GetFlagString(cmd, "deployment-label-key")
 	filename := ""
 	image := cmdutil.GetFlagString(cmd, "image")
+	noDistinctImage := cmdutil.GetFlagBool(cmd, "no-distinct-image")
 	oldName := args[0]
 	rollback := cmdutil.GetFlagBool(cmd, "rollback")
 	period := cmdutil.GetFlagDuration(cmd, "update-period")
@@ -248,8 +250,8 @@ func RunRollingUpdate(f *cmdutil.Factory, out io.Writer, cmd *cobra.Command, arg
 			}
 			fmt.Fprintf(out, "Found existing update in progress (%s), resuming.\n", newRc.Name)
 		} else {
-			if oldRc.Spec.Template.Spec.Containers[0].Image == image {
-				return cmdutil.UsageError(cmd, "Specified --image must be distinct from existing container image")
+			if oldRc.Spec.Template.Spec.Containers[0].Image == image && !noDistinctImage {
+				return cmdutil.UsageError(cmd, "Specified --image must be distinct from existing container image\nEither specify a disctinct container image or skip verification with --no-distinct-image")
 			}
 			newRc, err = kubectl.CreateNewControllerFromCurrentController(client, codec, cmdNamespace, oldName, newName, image, container, deploymentKey)
 			if err != nil {
